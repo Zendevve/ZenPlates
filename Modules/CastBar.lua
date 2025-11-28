@@ -15,10 +15,12 @@ local backdrop = {
 }
 
 -- Style a cast bar
-function CastBar:StyleCastBar(frame, castBar)
-    if not castBar or not ZenPlatesDB.showCastBars then return end
-
-    local cfg = ZenPlatesDB
+function CastBar:StyleCastBar(virtual, castBar)
+    local cfg = Config.db.profile
+    if not castBar or not cfg.showCastBars then
+        if castBar then castBar:Hide() end
+        return
+    end
 
     -- Set texture and dimensions
     castBar:SetStatusBarTexture(cfg.texture)
@@ -80,5 +82,8 @@ function CastBar:StyleCastBar(frame, castBar)
         castBar.time:SetShadowOffset(1, -1)
     end
 
-    -- TODO: Add interrupt detection and visual feedback
+    -- Interrupt Shield (Shield icon usually indicates non-interruptible)
+    -- We can detect the shield texture and color the bar grey/red
+    -- In 3.3.5, the shield texture is usually a separate region
+    -- TODO: Implement shield detection logic
 end

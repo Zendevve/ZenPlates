@@ -1,211 +1,213 @@
--- ZenPlates: Core Module
--- Main initialization and nameplate scanning system
+-- ZenPlates: Main Core Initialization
+-- Connects all systems and initializes the addon
 
-local addonName, ZenPlates = ...
-_G.ZenPlates = ZenPlates
+local _, ZenPlates = ...
 
-ZenPlates.Core = {}
-local Core = ZenPlates.Core
+-- Apply styling to a virtual plate
+function ZenPlates:ApplyPlateStyle(virtual)
+    local real = virtual.Real
+    if not real then return end
 
--- Frame tracking
-local numChildren = -1
-local WorldFrame = WorldFrame
-local trackedFrames = {}
-Core.targetGUID = nil
-
--- Main skinning function - applies all modules to a nameplate
-local function SkinPlate(frame)
-    if not frame or frame.isSkinned then return end
-
-    local healthBar, castBar = frame:GetChildren()
-    if not healthBar or not castBar then return end
-
-    -- Get nameplate regions
-    local regions = {frame:GetRegions()}
-    local nameText, levelText, raidIcon, eliteIcon
-
-    for _, region in pairs(regions) do
-        if region.GetObjectType then
-            local objType = region:GetObjectType()
-            if objType == "Texture" then
-                local tex = region:GetTexture()
-                if tex then
-                    -- Detect elite dragon
-                    if string.find(tex, "Elite") then eliteIcon = region end
-
-                    -- Hide default clutter
-                    if string.find(tex, "Border") or string.find(tex, "Flash") or
-                       string.find(tex, "Glow") or string.find(tex, "Elite") or
-                       string.find(tex, "Highlight") then
-                        region:SetTexture("")
-                        region:SetAlpha(0)
-                    elseif string.find(tex, "RaidTargetingIcons") then
-                        raidIcon = region
-                    end
-                end
-            elseif objType == "FontString" then
-                if not nameText then
-                    nameText = region
-                else
-                    levelText = region
-                end
+    -- Get Blizzard nameplate elements (they are children of virtual now)
+    local healthBar, castBar
+    for _, child in ipairs({virtual:GetChildren()}) do
+        local objType = child:GetObjectType()
+        if objType == "StatusBar" then
+            if not healthBar then
+                healthBar = child
+            else
+                castBar = child
             end
         end
     end
 
-    -- Apply unit filters first
-    if ZenPlates.Filters:ApplyFilters(frame, nameText) then
-        return -- Frame is hidden, don't skin it
+    if not healthBar then return end
+
+    -- Helper to hide regions
+    local function HideRegions(object, regionType)
+        if not object then return end
+        local regions = {object:GetRegions()}
+        for _, region in ipairs(regions) do
+            if region:GetObjectType() == "Texture" then
+                local tex = region:GetTexture()
+                if tex then
+                    if tex:find("Border") or tex:find("Glow") or tex:find("Nameplate-Border") or tex:find("Shield") then
+                        region:SetTexture("")
+                        region:SetAlpha(0)
+                    elseif tex:find("Elite") then
+                        eliteIcon = region
+                    elseif tex:find("RaidTargetingIcons") then
+                        raidIcon = region
+                    elseif tex:find("Highlight") then
+                        region:SetTexture("")
+                    end
+                end
+            elseif region:GetObjectType() == "FontString" then
+                if not nameText then nameText = region
+                elseif not levelText then levelText = region end
+            end
+        end
     end
 
-    -- Apply all module styling
-    ZenPlates.Health:StyleHealthBar(frame, healthBar, nameText, levelText, eliteIcon)
-    ZenPlates.CastBar:StyleCastBar(frame, castBar)
-    ZenPlates.Combat:CreateComboPoints(frame, healthBar)
+    -- Hide clutter on all frames
+    HideRegions(real)
+    HideRegions(healthBar)
+    HideRegions(castBar)
+
+    -- Store references on virtual
+    virtual.healthBar = healthBar
+    virtual.castBar = castBar
+    virtual.nameText = nameText
+    virtual.levelText = levelText
+    virtual.raidIcon = raidIcon
+    virtual.eliteIcon = eliteIcon
+
+    -- Apply filters
+    if ZenPlates.Filters and ZenPlates.Filters.ApplyFilters then
+        if ZenPlates.Filters:ApplyFilters(virtual, nameText) then
+            return  -- Plate is hidden
+        end
+    end
+
+    -- Apply module styling
+    if ZenPlates.Health and ZenPlates.Health.StyleHealthBar then
+        ZenPlates.Health:StyleHealthBar(virtual, healthBar, nameText, levelText, eliteIcon)
+    end
+
+    if ZenPlates.CastBar and ZenPlates.CastBar.StyleCastBar then
+        ZenPlates.CastBar:StyleCastBar(virtual, castBar)
+    end
+
+    if ZenPlates.Combat and ZenPlates.Combat.CreateComboPoints then
+        ZenPlates.Combat:CreateComboPoints(virtual, healthBar)
+    end
 
     -- Position raid icon
     if raidIcon then
         raidIcon:ClearAllPoints()
         raidIcon:SetPoint("RIGHT", healthBar, "LEFT", -18, 0)
     end
-
-    -- Mark as skinned
-    frame.isSkinned = true
-    frame.healthBar = healthBar
-    frame.castBar = castBar
-    frame.nameText = nameText
-    frame.guid = nil -- Will be set when we can identify it
-
-    -- Store frame for tracking
-    trackedFrames[frame] = true
-
-    -- OnShow handler
-    frame:SetScript("OnShow", function(self)
-        -- Don't resize - WoW handles that
-        -- Just update if this is the target
-        if UnitExists("target") and self.guid == Core.targetGUID then
-            ZenPlates.Debuffs:UpdateDebuffs(self, "target")
-            ZenPlates.Combat:UpdateComboPoints(self)
-        end
-    end)
 end
 
--- Scanner loop - detects new nameplates
-local function OnUpdate(self, elapsed)
-    local count = WorldFrame:GetNumChildren()
-    if count ~= numChildren then
-        numChildren = count
+-- Update a single plate
+function ZenPlates:UpdatePlate(virtual)
+    -- Check if this is the target
+    if self.state.hasTarget and virtual.Real then
+        local nameText = virtual.nameText
+        if nameText then
+            local plateName = nameText:GetText()
+            local targetName = UnitName("target")
 
-        for i = 1, select("#", WorldFrame:GetChildren()) do
-            local frame = select(i, WorldFrame:GetChildren())
-            if frame and not frame.isSkinned and frame:GetName() == nil then
-                local regions = {frame:GetRegions()}
-                if regions and regions[1] and regions[1].GetObjectType and
-                   regions[1]:GetObjectType() == "Texture" then
-                    local tex = regions[1]:GetTexture()
-                    if tex and string.find(tex, "Flash") then
-                        SkinPlate(frame)
-                    end
+            if plateName == targetName then
+                virtual.guid = self.state.targetGUID
+                virtual.isTarget = true
+
+                -- Apply target effects
+                if self.Target and self.Target.ApplyTargetEffects then
+                    self.Target:ApplyTargetEffects(virtual, virtual.healthBar)
                 end
-            end
-        end
-    end
-end
 
--- Update target nameplate (called on target change)
-function Core:UpdateTargetNameplate()
-    -- Get target GUID
-    if UnitExists("target") then
-        Core.targetGUID = UnitGUID("target")
-    else
-        Core.targetGUID = nil
-    end
+                -- Update debuffs
+                if self.Debuffs and self.Debuffs.UpdateDebuffs then
+                    self.Debuffs:UpdateDebuffs(virtual, "target")
+                end
 
-    -- Remove effects from all frames first
-    for frame in pairs(trackedFrames) do
-        if frame.guid ~= Core.targetGUID then
-            ZenPlates.Target:RemoveTargetEffects(frame)
-        end
-    end
+                -- Update combo points
+                if self.Combat and self.Combat.UpdateComboPoints then
+                    self.Combat:UpdateComboPoints(virtual)
+                end
 
-    -- Find and mark the target frame
-    -- Best effort: check mouseover first (most reliable when targeting)
-    if UnitExists("mouseover") and UnitGUID("mouseover") == Core.targetGUID then
-        -- Try to find the frame by name matching
-        local mouseoverName = UnitName("mouseover")
-        for frame in pairs(trackedFrames) do
-            if frame.nameText and frame.nameText:GetText() == mouseoverName then
-                frame.guid = Core.targetGUID
-                ZenPlates.Target:ApplyTargetEffects(frame, frame.healthBar)
-                ZenPlates.Debuffs:UpdateDebuffs(frame, "target")
-                ZenPlates.Combat:UpdateComboPoints(frame)
                 return
             end
         end
     end
 
-    -- Fallback: use name matching with target
-    if UnitExists("target") then
-        local targetName = UnitName("target")
-        for frame in pairs(trackedFrames) do
-            if frame:IsShown() and frame.nameText and frame.nameText:GetText() == targetName then
-                frame.guid = Core.targetGUID
-                ZenPlates.Target:ApplyTargetEffects(frame, frame.healthBar)
-                ZenPlates.Debuffs:UpdateDebuffs(frame, "target")
-                ZenPlates.Combat:UpdateComboPoints(frame)
-                break
-            end
-        end
+    -- Not the target - remove effects
+    virtual.isTarget = false
+    if self.Target and self.Target.RemoveTargetEffects then
+        self.Target:RemoveTargetEffects(virtual)
     end
 end
 
--- Initialize addon
-function Core:Initialize()
-    print("|cff00ff00ZenPlates|r v2.0 loaded. Type |cffFFFF00/zenplates|r to configure.")
+-- Update all visible plates
+function ZenPlates:UpdateAllPlates()
+    if not self.VirtualPlates then return end
 
-    -- Initialize config
-    ZenPlates.Config:Initialize()
-    -- ZenPlates.Options:CreatePanel()  -- Disabled: API incompatible with 3.3.5a
+    local plates = self.VirtualPlates:GetVisiblePlates()
+    for _, virtual in pairs(plates) do
+        self:UpdatePlate(virtual)
+    end
+end
 
+-- Update target plate specifically
+function ZenPlates:UpdateTargetPlate()
+    self:UpdateAllPlates()
 
-    -- Register combat events
-    ZenPlates.Combat:RegisterEvents()
+    -- Force immediate update
+    if self.UpdateThrottle then
+        self.UpdateThrottle:ForceUpdate()
+    end
+end
 
-    -- Create scanner frame
-    local scanner = CreateFrame("Frame")
-    scanner:SetScript("OnUpdate", OnUpdate)
+-- Event callbacks
+function ZenPlates:OnCombatStart()
+    -- Combat-specific updates
+end
 
-    -- Register target change event
-    local eventFrame = CreateFrame("Frame")
-    eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
-    eventFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
-    eventFrame:SetScript("OnEvent", function(self, event)
-        if event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT" then
-            Core:UpdateTargetNameplate()
-        end
-    end)
+function ZenPlates:OnCombatEnd()
+    -- Process queued updates
+end
 
-    -- Periodic cleanup for debuff cache
-    local cleanupTimer = 0
-    local cleanupFrame = CreateFrame("Frame")
-    cleanupFrame:SetScript("OnUpdate", function(self, elapsed)
-        cleanupTimer = cleanupTimer + elapsed
-        if cleanupTimer >= 10 then -- Clean every 10 seconds
-            ZenPlates.Debuffs:CleanCache()
-            cleanupTimer = 0
-        end
-    end)
+function ZenPlates:RefreshAllPlates()
+    self:UpdateAllPlates()
+end
+
+function ZenPlates:UpdateComboPoints()
+    if self.Combat and self.Combat.UpdateAllComboPoints then
+        self.Combat:UpdateAllComboPoints()
+    end
+end
+
+-- Apply settings from database
+function ZenPlates:ApplySettings()
+    -- Settings will be applied by individual modules
+    -- based on ZenPlatesDB values
+end
+
+-- Main initialization (called by PLAYER_LOGIN)
+function ZenPlates:Initialize()
+    -- Config was already initialized by Config module
+
+    -- Register combo points event if needed
+    if self.Combat then
+        self.Combat:RegisterEvents()
+    end
+
+    -- Start the update loop
+    print("|cff00ff00ZenPlates v" .. self.version .. "|r Plug-and-Play mode active!")
 
     -- Slash command
     SLASH_ZENPLATES1 = "/zenplates"
     SlashCmdList["ZENPLATES"] = function(msg)
         if msg == "reset" then
-            ZenPlates.Config:ResetToDefaults()
+            if ZenPlates.Config then
+                ZenPlates.Config:ResetToDefaults()
+            end
         else
             InterfaceOptionsFrame_OpenToCategory("ZenPlates")
         end
     end
 end
 
--- Start the addon
-Core:Initialize()
+-- Hook into EventHandler callbacks
+ZenPlates.EventHandler:SetScript("OnEvent", function(self, event, ...)
+    -- Call original handler
+    if self[event] then
+        self[event](self, event, ...)
+    end
+
+    -- Additional logic for PLAYER_LOGIN
+    if event == "PLAYER_LOGIN" then
+        ZenPlates:Initialize()
+    end
+end)

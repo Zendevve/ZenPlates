@@ -1,5 +1,5 @@
 -- ZenPlates: Combat Module
--- Handles combo points and combat-related features
+-- Handles combo points and other combat-related features
 
 local _, ZenPlates = ...
 ZenPlates.Combat = {}
@@ -7,86 +7,77 @@ ZenPlates.Combat = {}
 local Combat = ZenPlates.Combat
 local Config = ZenPlates.Config
 
--- Create combo point display
-function Combat:CreateComboPoints(frame, healthBar)
-    if not ZenPlatesDB.showComboPoints then return end
+-- Create combo points widget
+function Combat:CreateComboPoints(virtual, healthBar)
+    if not virtual.comboPoints then
+        virtual.comboPoints = CreateFrame("Frame", nil, virtual)
+        virtual.comboPoints:SetSize(60, 10)
+        virtual.comboPoints:SetPoint("BOTTOM", healthBar, "TOP", 0, 12)
 
-    local playerClass = select(2, UnitClass("player"))
-    if playerClass ~= "ROGUE" and playerClass ~= "DRUID" then return end
-
-    local cfg = ZenPlatesDB
-    local size = cfg.comboPointSize or 8
-
-    if not frame.comboPoints then
-        frame.comboPoints = CreateFrame("Frame", nil, frame)
-        frame.comboPoints:SetPoint("BOTTOM", healthBar, "TOP", 0, 18)
-        frame.comboPoints:SetWidth(size * 5 + 8)
-        frame.comboPoints:SetHeight(size)
-        frame.comboPoints.orbs = {}
-
-        -- Create 5 combo point orbs
+        virtual.comboPoints.points = {}
         for i = 1, 5 do
-            local orb = frame.comboPoints:CreateTexture(nil, "OVERLAY")
-            orb:SetTexture("Interface\\Buttons\\WHITE8X8")
-            orb:SetWidth(size)
-            orb:SetHeight(size)
-            orb:SetPoint("LEFT", frame.comboPoints, "LEFT", (i - 1) * (size + 2), 0)
+            local point = virtual.comboPoints:CreateTexture(nil, "OVERLAY")
+            point:SetSize(8, 8)
+            point:SetTexture(Config.db.profile.texture)
+            point:SetVertexColor(1, 0.9, 0) -- Gold
 
-            -- Brutalist styling - simple squares
-            orb:SetVertexColor(0.2, 0.2, 0.2, 0.8) -- Dark when inactive
+            if i == 1 then
+                point:SetPoint("LEFT", virtual.comboPoints, "LEFT", 0, 0)
+            else
+                point:SetPoint("LEFT", virtual.comboPoints.points[i-1], "RIGHT", 2, 0)
+            end
 
-            -- Border
-            local border = frame.comboPoints:CreateTexture(nil, "BACKGROUND")
-            border:SetTexture("Interface\\Buttons\\WHITE8X8")
-            border:SetPoint("TOPLEFT", orb, "TOPLEFT", -1, 1)
-            border:SetPoint("BOTTOMRIGHT", orb, "BOTTOMRIGHT", 1, -1)
-            border:SetVertexColor(0, 0, 0, 1)
-
-            frame.comboPoints.orbs[i] = orb
+            point:Hide()
+            virtual.comboPoints.points[i] = point
         end
     end
 end
 
--- Update combo point display
-function Combat:UpdateComboPoints(frame)
-    if not frame or not frame.comboPoints then return end
+-- Update combo points for a specific plate
+function Combat:UpdateComboPoints(virtual)
+    if not virtual or not virtual.comboPoints then return end
 
-    local comboPoints = GetComboPoints("player", "target")
+    local cfg = Config.db.profile
+    if not cfg.showComboPoints then
+        virtual.comboPoints:Hide()
+        return
+    end
 
-    if comboPoints and comboPoints > 0 then
-        frame.comboPoints:Show()
+    -- Only show on target
+    if not virtual.isTarget then
+        virtual.comboPoints:Hide()
+        return
+    end
 
+    local points = GetComboPoints("player", "target")
+    if points > 0 then
+        virtual.comboPoints:Show()
         for i = 1, 5 do
-            if i <= comboPoints then
-                -- Active combo point - bright color based on count
-                if comboPoints < 3 then
-                    frame.comboPoints.orbs[i]:SetVertexColor(1, 1, 0, 1) -- Yellow
-                elseif comboPoints < 5 then
-                    frame.comboPoints.orbs[i]:SetVertexColor(1, 0.5, 0, 1) -- Orange
-                else
-                    frame.comboPoints.orbs[i]:SetVertexColor(1, 0, 0, 1) -- Red
-                end
+            if i <= points then
+                virtual.comboPoints.points[i]:Show()
             else
-                -- Inactive combo point
-                frame.comboPoints.orbs[i]:SetVertexColor(0.2, 0.2, 0.2, 0.8)
+                virtual.comboPoints.points[i]:Hide()
             end
         end
     else
-        frame.comboPoints:Hide()
+        virtual.comboPoints:Hide()
     end
 end
 
--- Register combat events
-function Combat:RegisterEvents()
-    local eventFrame = CreateFrame("Frame")
-
-    eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
-    eventFrame:RegisterEvent("UNIT_COMBO_POINTS")
-
-    eventFrame:SetScript("OnEvent", function(self, event, ...)
-        if event == "PLAYER_TARGET_CHANGED" or event == "UNIT_COMBO_POINTS" then
-            -- Combo points will be updated in main nameplate update loop
-            ZenPlates.Core:UpdateTargetNameplate()
+-- Update all combo points (called on event)
+function Combat:UpdateAllComboPoints()
+    -- Find target plate
+    if ZenPlates.VirtualPlates then
+        local plates = ZenPlates.VirtualPlates:GetVisiblePlates()
+        for _, virtual in pairs(plates) do
+            if virtual.isTarget then
+                self:UpdateComboPoints(virtual)
+                break
+            end
         end
-    end)
+    end
+end
+
+function Combat:RegisterEvents()
+    -- Events are handled by Core/EventHandler.lua
 end

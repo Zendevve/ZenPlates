@@ -1,27 +1,52 @@
 ## Interface: 30300
 ## Title: ZenPlates
-## Notes: Hyperminimalist brutalist nameplates with class colors, debuffs, and advanced features.
+## Notes: Plug-and-play nameplates with smart defaults. Works perfectly out of the box!
 ## Author: You
-## Version: 2.0
+## Version: 3.0
 ## SavedVariables: ZenPlatesDB
 
-# Utilities (load first)
+# Libraries
+Embeds.xml
+
+# Main namespace (load first)
+ZenPlates.lua
+
+# Localization
+Locales\enUS.lua
+Locales\deDE.lua
+Locales\esES.lua
+Locales\frFR.lua
+Locales\zhCN.lua
+
+# Core Systems (load early)
+Core\EventHandler.lua
+Core\UpdateThrottle.lua
+Core\VirtualPlates.lua
+
+# Widget Framework
+Widgets\WidgetCore.lua
+Widgets\Threat.lua
+Widgets\Range.lua
+Widgets\ClassIcon.lua
+Widgets\Totem.lua
+
+# Configuration & Database
 Modules\Utils.lua
+Modules\Config.lua
+
+# Feature Modules (depends on core)
+Modules\Health.lua
+Modules\CastBar.lua
+Modules\Target.lua
+Modules\Debuffs.lua
+Modules\Combat.lua
+Modules\Filters.lua
 
 # Database
 Database\Debuffs.lua
 
-# Configuration
-Modules\Config.lua
-
-# Feature Modules
-Modules\Health.lua
-Modules\Debuffs.lua
-Modules\Target.lua
-Modules\CastBar.lua
-Modules\Combat.lua
-Modules\Filters.lua
+# Options UI (load last)
 Modules\Options.lua
 
-# Core (load last, initializes everything)
+# Main initialization (very last)
 Modules\Core.lua

@@ -1,80 +1,62 @@
 -- ZenPlates: Target Module
--- Handles target highlighting with glow effect (zoom disabled to prevent alignment issues)
+-- Handles target highlighting, scaling, and effects
 
 local _, ZenPlates = ...
 ZenPlates.Target = {}
 
 local Target = ZenPlates.Target
+local Config = ZenPlates.Config
 
--- Currently targeted nameplate
-Target.CurrentTarget = nil
+-- Apply effects when a plate becomes the target
+function Target:ApplyTargetEffects(virtual, healthBar)
+    local cfg = Config.db.profile
 
--- Apply glow effect to current target (zoom disabled - breaks positioning)
-function Target:ApplyTargetEffects(frame, healthBar)
-    if not frame or not healthBar then return end
-
-    local cfg = ZenPlatesDB
-
-    -- Remove effects from previous target
-    if self.CurrentTarget and self.CurrentTarget ~= frame then
-        self:RemoveTargetEffects(self.CurrentTarget)
+    -- 1. Scale
+    if cfg.targetZoom then
+        virtual:SetScale(cfg.targetZoomScale)
+        -- Ensure we're on top
+        virtual:SetFrameLevel(virtual:GetFrameLevel() + 5)
     end
 
-    -- DO NOT scale frames - interferes with WoW's nameplate positioning
-    -- Only apply glow effect
-
+    -- 2. Glow/Highlight
     if cfg.targetGlow then
-        if not frame.glow then
-            -- Create glow texture
-            frame.glow = frame:CreateTexture(nil, "BACKGROUND")
-            frame.glow:SetTexture("Interface\\Buttons\\WHITE8X8")
-            frame.glow:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -3, 3)
-            frame.glow:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 3, -3)
-            frame.glow:SetBlendMode("ADD")
+        if not virtual.targetGlow then
+            virtual.targetGlow = virtual:CreateTexture(nil, "BACKGROUND")
+            virtual.targetGlow:SetTexture("Interface\\AddOns\\ZenPlates\\Media\\Glow") -- Assuming we have a glow texture, or use standard
+            -- Fallback to standard glow if custom not available
+            virtual.targetGlow:SetTexture("Interface\\Buttons\\WHITE8X8")
+
+            virtual.targetGlow:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -3, 3)
+            virtual.targetGlow:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 3, -3)
+            virtual.targetGlow:SetBlendMode("ADD")
         end
 
-        local color = cfg.targetGlowColor or {1, 1, 1, 0.8}
-        frame.glow:SetVertexColor(unpack(color))
-        frame.glow:Show()
-
-        -- Subtle pulsing animation
-        if not frame.glowAnim then
-            frame.glowAnim = 0
-        end
-
-        frame:SetScript("OnUpdate", function(self, elapsed)
-            self.glowAnim = (self.glowAnim or 0) + elapsed
-            local alpha =0.3 + (math.sin(self.glowAnim * 3) * 0.2)
-            if self.glow then
-                self.glow:SetAlpha(alpha)
-            end
-        end)
+        local r, g, b, a = unpack(cfg.targetGlowColor)
+        virtual.targetGlow:SetVertexColor(r, g, b, a)
+        virtual.targetGlow:Show()
     end
 
-    self.CurrentTarget = frame
-end
-
--- Remove glow effects
-function Target:RemoveTargetEffects(frame)
-    if not frame then return end
-
-    -- Don't reset scale - WoW handles positioning
-
-    -- Remove glow
-    if frame.glow then
-        frame.glow:Hide()
-    end
-
-    -- Stop animation
-    frame:SetScript("OnUpdate", nil)
-
-    if self.CurrentTarget == frame then
-        self.CurrentTarget = nil
+    -- 3. Update widgets
+    if ZenPlates.WidgetCore then
+        -- Enable target-specific widgets
+        -- ZenPlates.WidgetCore:EnableWidget("TargetIndicator", virtual)
     end
 end
 
--- Update target on target change
-function Target:OnTargetChanged()
-    -- Effects are applied in the main skinning function
-    -- This is called from the event handler
+-- Remove effects when a plate is no longer the target
+function Target:RemoveTargetEffects(virtual)
+    local cfg = Config.db.profile
+
+    -- 1. Reset Scale
+    virtual:SetScale(cfg.globalScale)
+
+    -- 2. Hide Glow
+    if virtual.targetGlow then
+        virtual.targetGlow:Hide()
+    end
+
+    -- 3. Disable widgets
+    if ZenPlates.WidgetCore then
+        -- ZenPlates.WidgetCore:DisableWidget("TargetIndicator", virtual)
+    end
 end

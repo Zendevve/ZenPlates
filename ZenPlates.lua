@@ -1,19 +1,18 @@
 --[[
-    ZenPlates v2.0
-    Hyperminimalist brutalist nameplates for WoW 3.3.5a
+    ZenPlates v3.0 - Plug and Play Nameplates
 
-    All functionality has been moved to modular files in /Modules/
-    This file only creates the addon namespace.
+    A feature-rich nameplate addon with smart defaults that works
+    perfectly out of the box. Zero configuration needed!
 ]]--
 
-local addonName = "ZenPlates"
-local ZenPlates = {}
+local addonName, ZenPlates = ...
 
--- Create global namespace for access across modules
+-- Create global namespace for external access
 _G[addonName] = ZenPlates
 
--- Version info
-ZenPlates.version = "2.0"
+-- Version
+ZenPlates.version = "3.0"
 ZenPlates.loaded = false
 
--- The Core module (loaded last in .toc) will handle all initialization
+-- All modules will be loaded via .toc before this point
+-- This file just creates the addon namespace and sets base properties
