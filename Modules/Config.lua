@@ -11,10 +11,10 @@ Config.Defaults = {
     -- General Settings
     texture = "Interface\\Buttons\\WHITE8X8",
     font = "Fonts\\FRIZQT__.TTF",
-    fontSize = 10,
-    fontOutline = "OUTLINE",
+    fontSize = 11,
+    fontOutline = "THICKOUTLINE",
     width = 110,
-    height = 12,
+    height = 13,
 
     -- Colors (Brutalist aesthetic - high contrast)
     backdropColor = {0.05, 0.05, 0.05, 0.95}, -- Near-black

@@ -1,16 +1,15 @@
 -- ZenPlates: Target Module
--- Handles target highlighting with zoom and glow effects
+-- Handles target highlighting with glow effect (zoom disabled to prevent alignment issues)
 
 local _, ZenPlates = ...
 ZenPlates.Target = {}
 
 local Target = ZenPlates.Target
-local Config = ZenPlates.Config
 
 -- Currently targeted nameplate
 Target.CurrentTarget = nil
 
--- Apply zoom/glow effect to current target
+-- Apply glow effect to current target (zoom disabled - breaks positioning)
 function Target:ApplyTargetEffects(frame, healthBar)
     if not frame or not healthBar then return end
 
@@ -21,13 +20,9 @@ function Target:ApplyTargetEffects(frame, healthBar)
         self:RemoveTargetEffects(self.CurrentTarget)
     end
 
-    -- Apply zoom effect
-    if cfg.targetZoom then
-        local scale = cfg.targetZoomScale or 1.15
-        frame:SetScale(scale)
-    end
+    -- DO NOT scale frames - interferes with WoW's nameplate positioning
+    -- Only apply glow effect
 
-    -- Apply glow effect
     if cfg.targetGlow then
         if not frame.glow then
             -- Create glow texture
@@ -49,7 +44,7 @@ function Target:ApplyTargetEffects(frame, healthBar)
 
         frame:SetScript("OnUpdate", function(self, elapsed)
             self.glowAnim = (self.glowAnim or 0) + elapsed
-            local alpha = 0.3 + (math.sin(self.glowAnim * 3) * 0.2)
+            local alpha =0.3 + (math.sin(self.glowAnim * 3) * 0.2)
             if self.glow then
                 self.glow:SetAlpha(alpha)
             end
@@ -59,12 +54,11 @@ function Target:ApplyTargetEffects(frame, healthBar)
     self.CurrentTarget = frame
 end
 
--- Remove zoom/glow effects
+-- Remove glow effects
 function Target:RemoveTargetEffects(frame)
     if not frame then return end
 
-    -- Remove zoom
-    frame:SetScale(1.0)
+    -- Don't reset scale - WoW handles positioning
 
     -- Remove glow
     if frame.glow then

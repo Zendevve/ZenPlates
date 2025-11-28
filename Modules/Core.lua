@@ -11,6 +11,7 @@ local Core = ZenPlates.Core
 local numChildren = -1
 local WorldFrame = WorldFrame
 local trackedFrames = {}
+Core.targetGUID = nil
 
 -- Main skinning function - applies all modules to a nameplate
 local function SkinPlate(frame)
@@ -73,24 +74,18 @@ local function SkinPlate(frame)
     frame.healthBar = healthBar
     frame.castBar = castBar
     frame.nameText = nameText
+    frame.guid = nil -- Will be set when we can identify it
 
     -- Store frame for tracking
     trackedFrames[frame] = true
 
     -- OnShow handler
     frame:SetScript("OnShow", function(self)
-        local cfg = ZenPlatesDB
-        healthBar:SetWidth(cfg.width)
-        healthBar:SetHeight(cfg.height)
-        castBar:SetWidth(cfg.width)
-
-        -- Update debuffs if this is the target
-        if UnitExists("target") then
-            local targetFrame = Core:GetTargetNameplate()
-            if targetFrame == self then
-                ZenPlates.Debuffs:UpdateDebuffs(self, "target")
-                ZenPlates.Combat:UpdateComboPoints(self)
-            end
+        -- Don't resize - WoW handles that
+        -- Just update if this is the target
+        if UnitExists("target") and self.guid == Core.targetGUID then
+            ZenPlates.Debuffs:UpdateDebuffs(self, "target")
+            ZenPlates.Combat:UpdateComboPoints(self)
         end
     end)
 end
@@ -117,41 +112,50 @@ local function OnUpdate(self, elapsed)
     end
 end
 
--- Get the nameplate frame for current target
-function Core:GetTargetNameplate()
-    if not UnitExists("target") then return nil end
+-- Update target nameplate (called on target change)
+function Core:UpdateTargetNameplate()
+    -- Get target GUID
+    if UnitExists("target") then
+        Core.targetGUID = UnitGUID("target")
+    else
+        Core.targetGUID = nil
+    end
 
+    -- Remove effects from all frames first
     for frame in pairs(trackedFrames) do
-        if frame:IsShown() and frame.healthBar then
-            -- Check if this is the target's nameplate (heuristic check)
-            local r, g, b = frame.healthBar:GetStatusBarColor()
-            -- Target nameplates usually have specific color patterns
-            -- This is a best-effort detection
-            -- More reliable: check if frame has maximum alpha/prominence
-            if frame:GetAlpha() > 0.99 then
-                return frame
+        if frame.guid ~= Core.targetGUID then
+            ZenPlates.Target:RemoveTargetEffects(frame)
+        end
+    end
+
+    -- Find and mark the target frame
+    -- Best effort: check mouseover first (most reliable when targeting)
+    if UnitExists("mouseover") and UnitGUID("mouseover") == Core.targetGUID then
+        -- Try to find the frame by name matching
+        local mouseoverName = UnitName("mouseover")
+        for frame in pairs(trackedFrames) do
+            if frame.nameText and frame.nameText:GetText() == mouseoverName then
+                frame.guid = Core.targetGUID
+                ZenPlates.Target:ApplyTargetEffects(frame, frame.healthBar)
+                ZenPlates.Debuffs:UpdateDebuffs(frame, "target")
+                ZenPlates.Combat:UpdateComboPoints(frame)
+                return
             end
         end
     end
 
-    return nil
-end
-
--- Update target nameplate (called on target change)
-function Core:UpdateTargetNameplate()
-    local targetFrame = self:GetTargetNameplate()
-
-    if targetFrame then
-        -- Apply target effects
-        ZenPlates.Target:ApplyTargetEffects(targetFrame, targetFrame.healthBar)
-
-        -- Update debuffs
-        if UnitExists("target") then
-            ZenPlates.Debuffs:UpdateDebuffs(targetFrame, "target")
+    -- Fallback: use name matching with target
+    if UnitExists("target") then
+        local targetName = UnitName("target")
+        for frame in pairs(trackedFrames) do
+            if frame:IsShown() and frame.nameText and frame.nameText:GetText() == targetName then
+                frame.guid = Core.targetGUID
+                ZenPlates.Target:ApplyTargetEffects(frame, frame.healthBar)
+                ZenPlates.Debuffs:UpdateDebuffs(frame, "target")
+                ZenPlates.Combat:UpdateComboPoints(frame)
+                break
+            end
         end
-
-        -- Update combo points
-        ZenPlates.Combat:UpdateComboPoints(targetFrame)
     end
 end
 
@@ -172,8 +176,9 @@ function Core:Initialize()
     -- Register target change event
     local eventFrame = CreateFrame("Frame")
     eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+    eventFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
     eventFrame:SetScript("OnEvent", function(self, event)
-        if event == "PLAYER_TARGET_CHANGED" then
+        if event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT" then
             Core:UpdateTargetNameplate()
         end
     end)
@@ -195,7 +200,6 @@ function Core:Initialize()
         if msg == "reset" then
             ZenPlates.Config:ResetToDefaults()
         else
-            -- TODO: Open options panel
             InterfaceOptionsFrame_OpenToCategory("ZenPlates")
         end
     end
