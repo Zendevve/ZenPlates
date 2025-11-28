@@ -1,52 +1,20 @@
 ## Interface: 30300
 ## Title: ZenPlates
-## Notes: Plug-and-play nameplates with smart defaults. Works perfectly out of the box!
-## Author: You
-## Version: 3.0
+## Notes: Brutalist, plug-and-play nameplates.
+## Author: Antigravity
+## Version: 1.0
 ## SavedVariables: ZenPlatesDB
 
-# Libraries
-Embeds.xml
+Core\Constants.lua
+Core\Database.lua
+Core\Init.lua
+Core\Nameplates.lua
 
-# Main namespace (load first)
-ZenPlates.lua
-
-# Localization
-Locales\enUS.lua
-Locales\deDE.lua
-Locales\esES.lua
-Locales\frFR.lua
-Locales\zhCN.lua
-
-# Core Systems (load early)
-Core\EventHandler.lua
-Core\UpdateThrottle.lua
-Core\VirtualPlates.lua
-
-# Widget Framework
-Widgets\WidgetCore.lua
-Widgets\Threat.lua
-Widgets\Range.lua
-Widgets\ClassIcon.lua
-Widgets\Totem.lua
-
-# Configuration & Database
-Modules\Utils.lua
-Modules\Config.lua
-
-# Feature Modules (depends on core)
-Modules\Health.lua
-Modules\CastBar.lua
-Modules\Target.lua
-Modules\Debuffs.lua
-Modules\Combat.lua
-Modules\Filters.lua
-
-# Database
-Database\Debuffs.lua
-
-# Options UI (load last)
-Modules\Options.lua
-
-# Main initialization (very last)
-Modules\Core.lua
+Modules\Sorting.lua
+Modules\Skinning.lua
+Modules\Glow.lua
+Modules\Icons.lua
+Modules\Totems.lua
+Modules\Blacklist.lua
+Modules\Friendly.lua
+Modules\Stacking.lua
