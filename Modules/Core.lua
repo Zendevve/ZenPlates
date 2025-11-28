@@ -165,7 +165,7 @@ function Core:Initialize()
 
     -- Initialize config
     ZenPlates.Config:Initialize()
-    ZenPlates.Options:CreatePanel()
+    -- ZenPlates.Options:CreatePanel()  -- Disabled: API incompatible with 3.3.5a
 
 
     -- Register combat events
