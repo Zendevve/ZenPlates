@@ -275,4 +275,4 @@ function Options:CreatePanel()
 end
 
 -- Initialize options panel
-Options:CreatePanel()
+-- Options:CreatePanel() -- MOVED TO Core.lua

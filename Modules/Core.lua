@@ -165,6 +165,8 @@ function Core:Initialize()
 
     -- Initialize config
     ZenPlates.Config:Initialize()
+    ZenPlates.Options:CreatePanel()
+
 
     -- Register combat events
     ZenPlates.Combat:RegisterEvents()
