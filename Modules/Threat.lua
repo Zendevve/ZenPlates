@@ -32,7 +32,7 @@ function ns:UpdateThreat(frame)
     if not frame.zen.threatDiff then
         frame.zen.threatDiff = frame.zen:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.zen.threatDiff:SetPoint("RIGHT", frame.zen.healthBar, "LEFT", -4, 0) -- Left of Health Bar
-        frame.zen.threatDiff:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE") -- Larger (was 10)
+        frame.zen.threatDiff:SetFont(ns.defaults.font, 12, ns.defaults.fontStyle) -- Larger (was 10)
         frame.zen.threatDiff:SetShadowOffset(1, -1)
         frame.zen.threatDiff:Hide()
     end
@@ -41,7 +41,7 @@ function ns:UpdateThreat(frame)
     if not frame.zen.threatLevel then
         frame.zen.threatLevel = frame.zen:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.zen.threatLevel:SetPoint("LEFT", frame.zen.healthBar, "RIGHT", 4, 0) -- Right of Health Bar
-        frame.zen.threatLevel:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE") -- Larger (was 14)
+        frame.zen.threatLevel:SetFont(ns.defaults.font, 16, ns.defaults.fontStyle) -- Larger (was 14)
         frame.zen.threatLevel:SetShadowOffset(1, -1)
         frame.zen.threatLevel:Hide()
     end
@@ -55,6 +55,7 @@ function ns:UpdateThreat(frame)
         frame.zen.threatBar:SetMinMaxValues(0, 100)
 
         -- Background for threat bar
+        -- Background for threat bar
         local bg = frame.zen.threatBar:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
         bg:SetTexture(0, 0, 0, 0.5)
@@ -62,18 +63,9 @@ function ns:UpdateThreat(frame)
         -- Text inside threat bar
         frame.zen.threatBarText = frame.zen.threatBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.zen.threatBarText:SetPoint("CENTER", frame.zen.threatBar, "CENTER", 0, 0)
-        frame.zen.threatBarText:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE") -- Larger text (was 6)
+        frame.zen.threatBarText:SetFont(ns.defaults.font, 8, ns.defaults.fontStyle) -- Larger text (was 6)
 
         frame.zen.threatBar:Hide()
-    end
-
-    -- Only show threat for enemy units
-    local name = frame.zen.name:GetText()
-    if not name then
-        frame.zen.threatDiff:Hide()
-        frame.zen.threatLevel:Hide()
-        frame.zen.threatBar:Hide()
-        return
     end
 
     -- Check if unit exists and is enemy

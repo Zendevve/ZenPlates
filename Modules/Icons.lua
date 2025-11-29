@@ -73,7 +73,7 @@ function ns:CheckArenaParty(frame, name)
     if not frame.zen.idText then
         frame.zen.idText = frame.zen:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.zen.idText:SetPoint("LEFT", frame.zen, "RIGHT", 4, 0)
-        frame.zen.idText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+        frame.zen.idText:SetFont(ns.defaults.font, 12, ns.defaults.fontStyle)
         frame.zen.idText:SetTextColor(1, 1, 1)
         frame.zen.idText:SetShadowOffset(1, -1)
         frame.zen.idText:SetShadowColor(0, 0, 0, 1)

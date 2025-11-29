@@ -98,7 +98,7 @@ function ns:SkinNameplate(frame)
     if name then
         name:ClearAllPoints()
         name:SetPoint("TOP", healthBar, "BOTTOM", 0, -4) -- Slightly lower padding
-        name:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+        name:SetFont(ns.defaults.font, 10, ns.defaults.fontStyle)
         name:SetShadowOffset(1, -1)
     end
 

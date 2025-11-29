@@ -24,7 +24,7 @@ function ns:UpdateHealthText(frame)
     if not frame.zen.healthText then
         frame.zen.healthText = healthBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         frame.zen.healthText:SetPoint("CENTER", healthBar, "CENTER", 0, 0) -- Dead center of the bar
-        frame.zen.healthText:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE") -- Match the name font style
+        frame.zen.healthText:SetFont(ns.defaults.font, 10, ns.defaults.fontStyle) -- Match the name font style
         frame.zen.healthText:SetTextColor(1, 1, 1)
         frame.zen.healthText:SetShadowOffset(1, -1)
         frame.zen.healthText:SetShadowColor(0, 0, 0, 1)

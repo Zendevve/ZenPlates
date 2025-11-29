@@ -9,4 +9,6 @@ ns.defaults = {
     showHealthText = true,
     showThreat = true,
     abbreviateNumbers = true,
+    font = "Interface\\AddOns\\ZenPlates\\Media\\font.ttf",
+    fontStyle = "OUTLINE",
 }
