@@ -17,6 +17,8 @@ Modules\Icons.lua
 Modules\HealthText.lua
 Modules\Threat.lua
 Modules\Auras.lua
+Modules\ComboPoints.lua
+Modules\CastBar.lua
 Modules\Totems.lua
 Modules\Blacklist.lua
 Modules\Friendly.lua

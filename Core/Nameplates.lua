@@ -68,5 +68,7 @@ function ns:UpdatePlate(frame)
     if ns.UpdateHealthText then ns:UpdateHealthText(frame) end
     if ns.UpdateThreat then ns:UpdateThreat(frame) end
     if ns.UpdateAuras then ns:UpdateAuras(frame) end
+    if ns.UpdateComboPoints then ns:UpdateComboPoints(frame) end
+    if ns.UpdateCastBar then ns:UpdateCastBar(frame) end
 end
 
