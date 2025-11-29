@@ -11,4 +11,6 @@ ns.defaults = {
     abbreviateNumbers = true,
     font = "Interface\\AddOns\\ZenPlates\\Media\\font.ttf",
     fontStyle = "OUTLINE",
+    showAuras = true,
+    auraSize = 20,
 }

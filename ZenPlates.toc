@@ -16,6 +16,7 @@ Modules\Glow.lua
 Modules\Icons.lua
 Modules\HealthText.lua
 Modules\Threat.lua
+Modules\Auras.lua
 Modules\Totems.lua
 Modules\Blacklist.lua
 Modules\Friendly.lua

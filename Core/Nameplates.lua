@@ -67,5 +67,6 @@ function ns:UpdatePlate(frame)
     if ns.CheckFriendly then ns:CheckFriendly(frame) end
     if ns.UpdateHealthText then ns:UpdateHealthText(frame) end
     if ns.UpdateThreat then ns:UpdateThreat(frame) end
+    if ns.UpdateAuras then ns:UpdateAuras(frame) end
 end
 
