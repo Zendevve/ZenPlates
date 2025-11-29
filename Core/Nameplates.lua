@@ -65,5 +65,7 @@ function ns:UpdatePlate(frame)
     if ns.CheckBlacklist then ns:CheckBlacklist(frame) end
     if ns.CheckIcon then ns:CheckIcon(frame) end
     if ns.CheckFriendly then ns:CheckFriendly(frame) end
+    if ns.UpdateHealthText then ns:UpdateHealthText(frame) end
+    if ns.UpdateThreat then ns:UpdateThreat(frame) end
 end
 

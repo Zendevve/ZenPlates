@@ -6,5 +6,7 @@ ns.defaults = {
     showFriendly = true,
     showEnemy = true,
     clickThroughFriendly = false,
-    -- Add more defaults here as we implement features
+    showHealthText = true,
+    showThreat = true,
+    abbreviateNumbers = true,
 }

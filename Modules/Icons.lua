@@ -46,8 +46,9 @@ function ns:CheckIcon(frame)
 
     if not frame.zen.icon then
         frame.zen.icon = frame.zen:CreateTexture(nil, "OVERLAY")
-        frame.zen.icon:SetSize(20, 20)
-        frame.zen.icon:SetPoint("RIGHT", frame.zen, "LEFT", -2, 0)
+        frame.zen.icon:SetSize(24, 24)
+        -- Position relative to HealthBar but lower, to sit next to CastBar
+        frame.zen.icon:SetPoint("TOPRIGHT", frame.zen.healthBar, "BOTTOMLEFT", -4, 0)
         frame.zen.icon:Hide()
     end
 
@@ -71,8 +72,11 @@ function ns:CheckArenaParty(frame, name)
 
     if not frame.zen.idText then
         frame.zen.idText = frame.zen:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        frame.zen.idText:SetPoint("LEFT", frame.zen, "RIGHT", 2, 0)
+        frame.zen.idText:SetPoint("LEFT", frame.zen, "RIGHT", 4, 0)
+        frame.zen.idText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
         frame.zen.idText:SetTextColor(1, 1, 1)
+        frame.zen.idText:SetShadowOffset(1, -1)
+        frame.zen.idText:SetShadowColor(0, 0, 0, 1)
     end
 
     local idText = ""

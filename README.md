@@ -17,9 +17,12 @@ ZenPlates embraces a **brutalist design philosophy**: minimal, functional, and u
 - **Retail-style stacking** - Overlapping plates automatically separate vertically
 
 ### Smart Modules
+### Smart Modules
+- **Health Text** - Clear "30.0k (100%)" display with abbreviated numbers
+- **Threat Indicators** - Numerical threat values with color coding (Red/Yellow/Green)
 - **Custom Target Glow** - Thin red border on your current target
-- **Class Icons** - Automatically displays class icons for players
-- **Arena/Party IDs** - Shows arena numbers (1-5) and party numbers in arenas
+- **Class Icons** - Large, clear class icons (24x24) for players
+- **Arena/Party IDs** - Prominent arena numbers (1-5) and party numbers
 - **TotemPlates** - Important totems (Tremor, Grounding, etc.) show as icons instead of bars
 - **Blacklist** - Automatically hides nuisance units (Army of the Dead, snakes, etc.)
 - **Barless Friendly** - Friendly nameplates show only names, no health bars

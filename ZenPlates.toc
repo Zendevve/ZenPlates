@@ -14,6 +14,8 @@ Modules\Sorting.lua
 Modules\Skinning.lua
 Modules\Glow.lua
 Modules\Icons.lua
+Modules\HealthText.lua
+Modules\Threat.lua
 Modules\Totems.lua
 Modules\Blacklist.lua
 Modules\Friendly.lua
